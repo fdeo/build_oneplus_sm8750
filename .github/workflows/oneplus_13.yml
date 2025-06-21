@@ -5,15 +5,15 @@ on:
       KERNEL_SUFFIX:
         description: '内核名称修改(可改中文和emoji)'
         required: true
-        default: '-android15-8-g013ec21bba94-abogki383916444-4k'
+        default: '-android15-8-g0261dbe3cf7e-ab12786384-4k'
       KERNEL_TIME:
        description: "内核构建日期更改(默认为原厂)"
        required: true
-       default: 'Tue Dec 17 23:36:49 UTC 2024'
+       default: 'Wed Dec 11 19:16:38 UTC 2024'
       enable_feature_x:
        description: "启用kpm"
        required: false
-       default: true
+       default: false
        type: boolean
       enable_feature_y:
        description: "启用lz4+zstd"
@@ -33,6 +33,8 @@ jobs:
   build:
     runs-on: ubuntu-latest
     env:
+      KBUILD_BUILD_USER: "kleaf"
+      KBUILD_BUILD_HOST: "build-host"
       CCACHE_COMPILERCHECK: "content"
       CCACHE_NOHASHDIR: "true"
       CCACHE_HARDLINK: "true"
@@ -53,8 +55,8 @@ jobs:
           
       - name: Configure Git
         run: |
-         git config --global user.name "Q1udaoyu"
-         git config --global user.email "sucisama2888@gmail.com"
+         git config --global user.name "fdeo"
+         git config --global user.email "45246240+fdeo@users.noreply.github.com"
       - name: Install dependencies
         run: |
           sudo apt update
