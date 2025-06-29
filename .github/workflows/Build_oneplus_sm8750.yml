@@ -14,23 +14,23 @@ on:
           - 'oneplus_ace5_ultra'
           - 'realme_GT7pro'
           - 'realme_GT7pro_Speed'
-        default: 'oneplus_ace5_pro'
+        default: 'oneplus_13'
 
       keep_original_settings:
         description: "保持原内核名称及构建时间"
         required: false
-        default: true
+        default: false
         type: boolean
 
       custom_kernel_suffix:
         description: "✏️ 自定义内核名称(示例:-TG@qdykernel) - 仅在取消勾选'保持原设置'时有效"
         required: false
-        default: ''
+        default: '-android15-8-g0261dbe3cf7e-ab12786384-4k'
       
       custom_kernel_time:
         description: "⏰ 自定义构建时间(示例:Tue Dec 17 23:36:49 UTC 2024) - 仅在取消勾选'保持原设置'时有效"
         required: false
-        default: ''
+        default: 'Wed Dec 11 19:16:38 UTC 2024'
       
       enable_feature_x:
         description: "生成无KPM的AK3 - 取消则只有有KPM的AK3"
@@ -57,6 +57,9 @@ jobs:
   build:
     name: Build_${{ github.event.inputs.REPO_MANIFEST }}
     runs-on: ubuntu-latest
+    env:
+      KBUILD_BUILD_USER: "kleaf"
+      KBUILD_BUILD_HOST: "build-host"
     steps:
       - name: 📊 Check disk space (检查磁盘空间)
         run: |
@@ -110,8 +113,8 @@ jobs:
 
       - name: 📦 Configure Git (设置下载账户)
         run: |
-          git config --global user.name "Q1udaoyu"
-          git config --global user.email "sucisama2888@gmail.com"
+          git config --global user.name "fdeo"
+          git config --global user.email "45246240+fdeo@users.noreply.github.com"
 
       - name: 🛠 Configure APT caching (配置APT缓存)
         run: |
