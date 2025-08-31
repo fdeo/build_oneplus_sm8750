@@ -55,6 +55,9 @@ jobs:
   build:
     name: Build_${{ github.event.inputs.REPO_MANIFEST }}
     runs-on: ubuntu-latest
+    env:
+      KBUILD_BUILD_USER: "kleaf"
+      KBUILD_BUILD_HOST: "build-host"
     steps:
       - uses: actions/checkout@v4
         with:
@@ -138,8 +141,8 @@ jobs:
 
       - name: 📦 Configure Git (设置下载账户)
         run: |
-          git config --global user.name "Q1udaoyu"
-          git config --global user.email "sucisama2888@gmail.com"
+          git config --global user.name "fdeo"
+          git config --global user.email "45246240+fdeo@users.noreply.github.com"
 
       - name: 🛠 Configure APT caching (配置APT缓存)
         run: |
