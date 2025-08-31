@@ -15,7 +15,7 @@ on:
           - 'realme_GT7'
           - 'realme_GT7pro'
           - 'realme_GT7pro_Speed'
-        default: 'oneplus_ace5_pro'
+        default: 'oneplus_13'
 
       keep_original_settings:
         description: "📝保持原内核名称及构建时间(不懂请保持默认)"
@@ -224,19 +224,61 @@ jobs:
         run: |
             mkdir -p kernel_workspace/kernel_platform
             cd kernel_workspace/kernel_platform
-            
-            curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/susfs-main/kernel/setup.sh" -o setup.sh && bash setup.sh susfs-main
-            cd KernelSU
+
+            BRANCH_NAME="susfs-main"
+            CUSTOM_TAG=""
+            echo "分支名: $BRANCH_NAME"
+            echo "自定义版本标识: $CUSTOM_TAG"
+
+            curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/main/kernel/setup.sh" | bash -s "$BRANCH_NAME"
+            cd ./KernelSU
+
+            KSU_API_VERSION=$(curl -fsSL "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/$BRANCH_NAME/kernel/Makefile" | \
+              grep -m1 "KSU_VERSION_API :=" | awk -F'= ' '{print $2}' | tr -d '[:space:]')
+
+            if [[ -z "$KSU_API_VERSION" || "$(printf '%s\n' "$KSU_API_VERSION" "3.1.7" | sort -V | head -n1)" != "3.1.7" ]]; then
+              KSU_API_VERSION="3.1.7"
+            fi
+
+            echo "KSU_API_VERSION=$KSU_API_VERSION" >> $GITHUB_ENV
+
+            GIT_HASH=$(git rev-parse --short HEAD)
+            echo "GIT_HASH=$GIT_HASH"
+
+            if [[ -z "$CUSTOM_TAG" || "$CUSTOM_TAG" == "$BRANCH_NAME" ]]; then
+              VERSION_FULL="v$KSU_API_VERSION-$GIT_HASH@$BRANCH_NAME"
+            else
+              VERSION_FULL="v$KSU_API_VERSION-$CUSTOM_TAG@$BRANCH_NAME[$GIT_HASH]"
+            fi
+
+            sed -i '/define get_ksu_version_full/,/endef/d' kernel/Makefile
+            sed -i '/KSU_VERSION_API :=/d' kernel/Makefile
+            sed -i '/KSU_VERSION_FULL :=/d' kernel/Makefile
+
+            VERSION_DEFINITIONS=$(cat <<EOF
+              define get_ksu_version_full
+              $VERSION_FULL
+              endef
+
+              KSU_VERSION_API := $KSU_API_VERSION
+              KSU_VERSION_FULL := $VERSION_FULL
+            EOF
+            )
+
+            awk -v def="$VERSION_DEFINITIONS" '
+              /REPO_OWNER :=/ {print; print def; inserted=1; next}
+              1
+              END {if (!inserted) print def}
+            ' kernel/Makefile > kernel/Makefile.tmp && mv kernel/Makefile.tmp kernel/Makefile
+
             KSU_VERSION=$(expr $(git rev-list --count main 2>/dev/null || echo 13000) + 10700)
             echo "KSUVER=$KSU_VERSION" >> $GITHUB_ENV
-             cp "${GITHUB_WORKSPACE}/.github/workflows/Bin/setup.bin" ./
-            chmod +x setup.bin
-            if [ ! -f "kernel/Makefile" ]; then
-              echo "::error ::kernel/Makefile"
-              ls -la
-              exit 1
-            fi
-            ./setup.bin
+
+            echo "::group::最终 Makefile 中版本信息及部分调试结果预览"
+            grep -A10 "REPO_OWNER" kernel/Makefile
+            grep "KSU_VERSION_FULL" kernel/Makefile
+            echo "::endgroup::"
+
       - name: 🔧 Set up SUSFS (配置 SUSFS)
         run: |
            cd kernel_workspace
@@ -377,11 +419,11 @@ jobs:
        
       - name: 📦 Make AnyKernel3 (创建Anykernel3)
         run: |
-          cp "${GITHUB_WORKSPACE}/.github/workflows/Bin/main.bin" ./
-          chmod +x main.bin
-          ./main.bin "make_anykernel3"
-          rm -rf ./main.bin
-          
+          git clone https://github.com/Kernel-SU/AnyKernel3.git --depth=1
+          rm -rf ./AnyKernel3/.git
+          rm -rf ./AnyKernel3/push.sh
+          cp kernel_workspace/kernel_platform/common/out/arch/arm64/boot/Image ./AnyKernel3/
+
       - name: 📤 Upload AnyKernel3 (上传 Anykernel3)
         uses: actions/upload-artifact@v4
         with:
