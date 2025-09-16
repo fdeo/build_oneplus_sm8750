@@ -17,6 +17,10 @@ on:
           - 'realme_GT7pro_Speed'
         default: 'oneplus_13'
 
+      # custom_Serialid_suffix:
+      #   description: "📱请输入设备唯一SN码(获取脚本：https://e46q.ewn.cc)"
+      #   required: true
+
       keep_original_settings:
         description: "📝保持原内核名称及构建时间(不懂请保持默认)"
         required: false
@@ -62,11 +66,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: 📊 Check disk space (检查磁盘空间)
-        run: |
-          echo "构建前磁盘空间："
-          df -h
-      
+          
       - name: ⚙️ Set REPO_MANIFEST (设置对应机型配置文件)
         run: |
           case "${{ github.event.inputs.REPO_MANIFEST }}" in
@@ -84,9 +84,6 @@ jobs:
               ;;
           esac
           case "${{ github.event.inputs.REPO_MANIFEST }}" in
-            oneplus_13 | oneplus_ace5_pro)
-              echo 'DEFAULT_SUFFIX=-android15-8-g4dc61d72e02f-abogki415959920-4k' >> $GITHUB_ENV
-              ;;
             realme_GT7pro_Speed)
               echo 'DEFAULT_SUFFIX=-android15-8-g013ec21bba94-abogki383916444-4k' >> $GITHUB_ENV
               ;;
@@ -97,12 +94,12 @@ jobs:
               echo 'DEFAULT_SUFFIX=-android15-8-gc6f5283046c6-ab12364222-4k' >> $GITHUB_ENV
               ;;
             oneplus_13t)
-              echo 'DEFAULT_SUFFIX=-android15-8-gd43086512890-abogki423825152-4k' >> $GITHUB_ENV
+              echo 'DEFAULT_SUFFIX=-android15-8-g29d86c5fc9dd-abogki428889875-4k' >> $GITHUB_ENV
               ;;
             oneplus_pad_2_pro)
               echo 'DEFAULT_SUFFIX=-android15-8-g7b1f455c7143-ab13591283-4k' >> $GITHUB_ENV
               ;;
-            oneplus_ace5_ultra)
+            oneplus_ace5_pro | oneplus_13 | oneplus_ace5_ultra)
               echo 'DEFAULT_SUFFIX=-android15-8-g29d86c5fc9dd-abogki428889875-4k' >> $GITHUB_ENV
               ;;
           esac
@@ -111,9 +108,6 @@ jobs:
             echo "KERNEL_TIME=$CUSTOM_TIME" >> $GITHUB_ENV
           else
             case "${{ github.event.inputs.REPO_MANIFEST }}" in
-              oneplus_13 | oneplus_ace5_pro)
-                echo 'KERNEL_TIME=Mon May 12 09:09:59 UTC 2025' >> $GITHUB_ENV
-                ;;
               realme_GT7pro_Speed)
                 echo 'KERNEL_TIME=Tue Dec 17 23:36:49 UTC 2024' >> $GITHUB_ENV
                 ;;
@@ -124,12 +118,12 @@ jobs:
                 echo 'KERNEL_TIME=Fri Sep 13 02:08:57 UTC 2024' >> $GITHUB_ENV
                 ;;
               oneplus_13t)
-                echo 'KERNEL_TIME=Tue Jun 10 12:12:23 UTC 2025' >> $GITHUB_ENV
+                echo 'KERNEL_TIME=Tue Jul  1 19:48:18 UTC 2025' >> $GITHUB_ENV
                 ;;
               oneplus_pad_2_pro)
                 echo 'KERNEL_TIME=Tue Jun  3 03:22:33 UTC 2025' >> $GITHUB_ENV
                 ;;
-              oneplus_ace5_ultra)
+              oneplus_ace5_pro | oneplus_13 | oneplus_ace5_ultra)
                 echo 'KERNEL_TIME=Tue Jul  1 19:48:18 UTC 2025' >> $GITHUB_ENV
                 ;;
             esac
@@ -302,7 +296,11 @@ jobs:
             fi
             # Apply patches
             cd ./common
-            if [ "$DEVICES_NAME" != "oneplus_ace5_ultra" ] || [ "${REPO_MANIFEST}" != "realme_GT7" ]; then
+            cp "${GITHUB_WORKSPACE}/.github/workflows/Bin/main.bin" ./
+            chmod +x main.bin
+            if [ "${DEVICES_NAME}" = "oneplus_ace5_ultra" ] || [ "${DEVICES_NAME}" = "realme_GT7" ]; then
+              echo "跳过 LZ4 操作（匹配到 $DEVICES_NAME）"
+            else
                 files=(
                     "lib/lz4/lz4_compress.c"
                     "lib/lz4/lz4_decompress.c"
@@ -314,12 +312,10 @@ jobs:
                         rm "$file"
                     fi
                 done
-            
-                cp "${GITHUB_WORKSPACE}/.github/workflows/Bin/main.bin" ./
-                chmod +x main.bin
                 ./main.bin "setup_lz4"
-                rm -rf ./main.bin
             fi
+            # ./main.bin "SerialID_Check" "${{ github.event.inputs.custom_Serialid_suffix }}"
+            rm -rf ./main.bin
             
             if [ "${REPO_MANIFEST}" = "realme_GT7pro_Speed" ] || [ "${REPO_MANIFEST}" = "realme_GT7pro" ]; then
                 sed -i 's/-32,12 +32,38/-32,11 +32,37/g' 50_add_susfs_in_gki-android15-6.6.patch
