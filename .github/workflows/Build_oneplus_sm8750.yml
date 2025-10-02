@@ -17,10 +17,6 @@ on:
           - 'realme_GT7pro_Speed'
         default: 'oneplus_13'
 
-      # custom_Serialid_suffix:
-      #   description: "📱请输入设备唯一SN码(获取脚本：https://e46q.ewn.cc)"
-      #   required: true
-
       keep_original_settings:
         description: "📝保持原内核名称及构建时间(不懂请保持默认)"
         required: false
@@ -134,6 +130,20 @@ jobs:
                 ;;
             esac
           fi
+          
+      - name: 🚀 Maximize Build Space  (最大化构建空间)
+        if: ${{ contains(fromJson('["oneplus_pad_2_pro","realme_GT7pro","realme_GT7pro_Speed"]'), env.DEVICES_NAME) }}
+        uses: easimon/maximize-build-space@master
+        with:
+          root-reserve-mb: 8192
+          temp-reserve-mb: 4096
+          remove-dotnet: 'true'
+          remove-android: 'true'
+          remove-haskell: 'true'
+          remove-codeql: 'true'
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
           
       - name: ⚙️ Set device-specific CCACHE_DIR (设置对应机型Cceche路径)
         run: |
@@ -337,8 +347,8 @@ jobs:
             fi
             
             patch -p1 < 50_add_susfs_in_gki-android15-6.6.patch || true
-            cp ../../SukiSU_patch/hooks/syscall_hooks.patch ./
-            patch -p1 -F 3 < syscall_hooks.patch
+            cp ../../SukiSU_patch/hooks/scope_min_manual_hooks_v1.5.patch ./
+            patch -p1 -F 3 < scope_min_manual_hooks_v1.5.patch
             
             echo "完成"
 
